@@ -2,64 +2,50 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\Queue;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        $branchIds = $user->branches->pluck('id');
+        $user = $request->user();
 
-        // Antrean hari ini
+        // ambil semua cabang milik owner
+        $branches = Branch::where('user_id', $user->id)->orderBy('id')->get();
+        $branchIds = $branches->pluck('id');
+
+        $today = now()->toDateString();
+        $startMonth = now()->startOfMonth()->toDateString();
+        $endMonth = now()->endOfMonth()->toDateString();
+
+        // scorecards
         $todayCount = Queue::whereIn('branch_id', $branchIds)
-            ->whereDate('created_at', today())
+            ->where('queue_date', $today)
             ->count();
 
-        // Antrean bulan ini
         $monthCount = Queue::whereIn('branch_id', $branchIds)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+            ->whereBetween('queue_date', [$startMonth, $endMonth])
             ->count();
 
-        $dailyData = [];
-        $monthlyData = [];
+        // chart (antrean per hari bulan ini) - untuk Pro
+        $dailyCounts = Queue::whereIn('branch_id', $branchIds)
+            ->whereBetween('queue_date', [$startMonth, $endMonth])
+            ->selectRaw('queue_date as day, COUNT(*) as total')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
 
-        if ($user->isPro()) {
+        $chartLabels = $dailyCounts->pluck('day')->map(fn($d) => (string)$d)->toArray();
+        $chartValues = $dailyCounts->pluck('total')->toArray();
 
-            // 7 hari terakhir
-            for ($i = 6; $i >= 0; $i--) {
-                $date = Carbon::today()->subDays($i);
-
-                $dailyData[] = [
-                    'date' => $date->format('d M'),
-                    'total' => Queue::whereIn('branch_id', $branchIds)
-                        ->whereDate('created_at', $date)
-                        ->count()
-                ];
-            }
-
-            // 12 bulan
-            for ($m = 11; $m >= 0; $m--) {
-                $month = Carbon::now()->subMonths($m);
-
-                $monthlyData[] = [
-                    'month' => $month->format('M Y'),
-                    'total' => Queue::whereIn('branch_id', $branchIds)
-                        ->whereMonth('created_at', $month->month)
-                        ->whereYear('created_at', $month->year)
-                        ->count()
-                ];
-            }
-        }
-
-        return view('dashboard.index', compact(
+        return view('dashboard', compact(
+            'branches',
             'todayCount',
             'monthCount',
-            'dailyData',
-            'monthlyData'
+            'chartLabels',
+            'chartValues'
         ));
     }
 }

@@ -15,7 +15,10 @@ use App\Http\Controllers\DashboardController;
 use App\Models\Branch;
 use App\Http\Controllers\QueueHistoryController;
 
-Route::get('/', fn () => view('landing'))->name('home');
+use App\Http\Controllers\ReportController;
+
+
+Route::get('/', fn() => view('landing'))->name('home');
 
 /**
  * PUBLIC (tanpa auth)
@@ -50,7 +53,7 @@ Route::middleware('auth')->group(function () {
  */
 Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
     // dashboard (hanya 1x, jangan duplikat)
-    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn() => view('dashboard'))->name('dashboard');
 
     // branches (kalau tetap mau di sini)
     Route::resource('branches', BranchController::class);
@@ -76,7 +79,16 @@ Route::middleware(['auth'])->group(function () {
         ->name('queue.history');
 });
 
-Route::middleware(['auth', 'ensure.onboarding'])
-    ->get('/dashboard', [DashboardController::class, 'index'])
-    ->name('dashboard');
+// Route::middleware(['auth', 'ensure.onboarding'])
+//     ->get('/dashboard', [DashboardController::class, 'index'])
+//     ->name('dashboard');
 
+Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'ensure.onboarding', 'pro'])->group(function () {
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
+    Route::get('/reports/excel', [ReportController::class, 'exportExcel'])->name('reports.excel');
+});

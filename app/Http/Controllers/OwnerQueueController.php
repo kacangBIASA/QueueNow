@@ -9,33 +9,42 @@ use Illuminate\Support\Facades\DB;
 
 class OwnerQueueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user();
         $today = now()->toDateString();
 
-        // Ambil semua cabang milik owner (kalau temanmu sudah buat multi cabang, ini sudah siap)
-        $branches = Branch::where('user_id', $user->id)->orderBy('id')->get();
+        // ambil cabang milik owner
+        $branches = Branch::where('user_id', $user->id)
+            ->orderBy('id')
+            ->get();
 
-        // Untuk UI, pilih cabang pertama sebagai default tampil
-        $activeBranch = $branches->first();
+        // cabang aktif (default: pertama)
+        $activeBranchId = (int) $request->query('branch_id', $branches->first()?->id ?? 0);
+        $activeBranch = $branches->firstWhere('id', $activeBranchId) ?? $branches->first();
 
-        $data = null;
-        if ($activeBranch) {
-            $data = $this->getQueueData($activeBranch->id, $today);
-        }
+        $data = $activeBranch
+            ? $this->getQueueData($activeBranch->id, $today)
+            : null;
 
-        return view('owner.queues.index', compact('branches', 'activeBranch', 'today', 'data'));
+        return view('owner.queues.index', compact(
+            'branches',
+            'activeBranch',
+            'today',
+            'data'
+        ));
     }
+
+
 
     public function callNext(Branch $branch)
     {
         $this->authorizeBranch($branch);
-
         $today = now()->toDateString();
 
-        DB::transaction(function () use ($branch, $today) {
-            // jika ada called yang masih aktif, biarkan (opsional)
+        $called = false;
+
+        DB::transaction(function () use ($branch, $today, &$called) {
             $next = Queue::where('branch_id', $branch->id)
                 ->where('queue_date', $today)
                 ->where('status', 'waiting')
@@ -48,18 +57,26 @@ class OwnerQueueController extends Controller
                     'status' => 'called',
                     'called_at' => now(),
                 ]);
+                $called = true;
             }
         });
 
-        return back()->with('success', 'Memanggil antrean berikutnya.');
+        return back()->with(
+            $called ? 'success' : 'error',
+            $called ? 'Memanggil antrean berikutnya.' : 'Belum ada antrean yang menunggu hari ini.'
+        );
     }
+
 
     public function skip(Branch $branch, Queue $queue)
     {
         $this->authorizeBranch($branch);
         $this->authorizeQueue($branch, $queue);
 
-        $queue->update(['status' => 'skipped']);
+        $queue->update([
+            'status' => 'skipped',
+            'finished_at' => null,
+        ]);
 
         return back()->with('success', 'Antrean di-skip.');
     }
@@ -95,7 +112,7 @@ class OwnerQueueController extends Controller
         $called = Queue::where('branch_id', $branchId)
             ->where('queue_date', $today)
             ->where('status', 'called')
-            ->orderBy('called_at', 'desc')
+            ->orderByDesc('called_at')
             ->first();
 
         $waiting = Queue::where('branch_id', $branchId)
@@ -118,14 +135,14 @@ class OwnerQueueController extends Controller
 
     private function authorizeBranch(Branch $branch): void
     {
-        if ($branch->user_id !== auth()->id()) {
+        if ((int) $branch->user_id !== (int) auth()->id()) {
             abort(403);
         }
     }
 
     private function authorizeQueue(Branch $branch, Queue $queue): void
     {
-        if ($queue->branch_id !== $branch->id) {
+        if ((int) $queue->branch_id !== (int) $branch->id) {
             abort(404);
         }
     }

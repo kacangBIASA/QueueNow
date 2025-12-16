@@ -12,12 +12,12 @@ class PublicQueueController extends Controller
     public function show(string $public_code)
     {
         $branch = Branch::where('public_code', $public_code)->firstOrFail();
-        $today = now()->toDateString();
+        $today  = now()->toDateString();
 
         $currentlyCalled = Queue::where('branch_id', $branch->id)
             ->where('queue_date', $today)
             ->where('status', 'called')
-            ->orderBy('called_at', 'desc')
+            ->orderByDesc('called_at')
             ->first();
 
         $waitingCount = Queue::where('branch_id', $branch->id)
@@ -31,11 +31,16 @@ class PublicQueueController extends Controller
 
         $myNumber = session("my_queue_number_{$branch->id}_{$today}");
 
-        // QR (link ke halaman ini)
-        $publicUrl = route('public.queue.show', $branch->public_code);
+        $publicUrl = route('public.queue.show', ['public_code' => $branch->public_code]);
 
-        return view('public.queue.show', compact(
-            'branch','today','currentlyCalled','waitingCount','lastTaken','myNumber','publicUrl'
+        return view('public.queues.show', compact(
+            'branch',
+            'today',
+            'currentlyCalled',
+            'waitingCount',
+            'lastTaken',
+            'myNumber',
+            'publicUrl'
         ));
     }
 
@@ -46,10 +51,10 @@ class PublicQueueController extends Controller
         ]);
 
         $branch = Branch::where('public_code', $public_code)->firstOrFail();
-        $today = now()->toDateString();
+        $today  = now()->toDateString();
 
-        // Anti race-condition: transaction + retry bila unik konflik
         $attempts = 0;
+
         while ($attempts < 3) {
             $attempts++;
 
@@ -60,26 +65,30 @@ class PublicQueueController extends Controller
                         ->lockForUpdate()
                         ->max('number');
 
-                    $next = $max ? $max + 1 : $branch->start_queue_number;
+                    $start = (int) ($branch->nomor_antrean_awal ?? 1);
+                    $next  = $max ? ((int) $max + 1) : $start;
 
                     return Queue::create([
-                        'branch_id' => $branch->id,
-                        'queue_date' => $today,
-                        'number' => $next,
-                        'source' => $request->source,
-                        'status' => 'waiting',
-                        'taken_at' => now(),
+                        'branch_id'   => $branch->id,
+                        'queue_date'  => $today,
+                        'number'      => $next,
+                        'source'      => $request->string('source')->toString(),
+                        'status'      => 'waiting',
+                        'taken_at'    => now(),
+                        'called_at'   => null,
+                        'finished_at' => null,
                     ]);
                 });
 
                 session(["my_queue_number_{$branch->id}_{$today}" => $queue->number]);
 
                 return redirect()
-                    ->route('public.queue.show', $branch->public_code)
+                    ->route('public.queue.show', ['public_code' => $branch->public_code])
                     ->with('success', "Nomor antrean kamu: {$queue->number}");
             } catch (\Throwable $e) {
-                // coba ulang kalau collision
-                if ($attempts >= 3) throw $e;
+                if ($attempts >= 3) {
+                    throw $e;
+                }
             }
         }
 

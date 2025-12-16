@@ -13,7 +13,7 @@ class BranchController extends Controller
     public function index()
     {
         $branches = auth()->user()->branches;
-    return view('branch.index', compact('branches'));
+        return view('branch.index', compact('branches'));
     }
 
     /**
@@ -22,18 +22,17 @@ class BranchController extends Controller
      */
     public function create()
     {
-    $user = auth()->user();
+        $user = auth()->user();
 
-    // Owner FREE hanya boleh 1 cabang
-    if (!$user->isPro() && $user->branches()->count() >= 1) {
-        return redirect()
-            ->route('branches.index')
-            ->with('error', 'Paket FREE hanya diperbolehkan memiliki 1 cabang.');
+        // Owner FREE hanya boleh 1 cabang
+        if (($user->subscription_type ?? 'free') !== 'pro' && $user->branches()->count() >= 1) {
+            return redirect()
+                ->route('branches.index')
+                ->with('error', 'Paket FREE hanya diperbolehkan memiliki 1 cabang. Upgrade ke PRO untuk cabang tanpa batas.');
+        }
+
+        return view('branch.create');
     }
-
-    return view('branch.create');
-    }
-
 
     /**
      * Simpan data cabang ke database
@@ -43,12 +42,24 @@ class BranchController extends Controller
         $request->validate([
             'nama_cabang' => 'required|string|max:255',
             'alamat' => 'required|string',
-            'nomor_antrean_awal' => 'required|integer',
-            'jadwal_operasional' => 'required|string',
+            'nomor_antrean_awal' => 'required|integer|min:1',
+            'jadwal_operasional' => 'required|string|max:255',
         ]);
 
+        $user = $request->user();
+
+        // Guard ulang di STORE (biar tidak bisa bypass lewat POST langsung)
+        if (($user->subscription_type ?? 'free') !== 'pro') {
+            $count = Branch::where('user_id', $user->id)->count();
+            if ($count >= 1) {
+                return back()
+                    ->withInput()
+                    ->with('error', 'Paket FREE hanya diperbolehkan memiliki 1 cabang. Upgrade ke PRO untuk cabang tanpa batas.');
+            }
+        }
+
         Branch::create([
-            'user_id' => auth()->id(),
+            'user_id' => $user->id,
             'nama_cabang' => $request->nama_cabang,
             'alamat' => $request->alamat,
             'nomor_antrean_awal' => $request->nomor_antrean_awal,
@@ -65,12 +76,11 @@ class BranchController extends Controller
      */
     public function edit(Branch $branch)
     {
-        // Keamanan: pastikan cabang milik user yang login
         if ($branch->user_id !== auth()->id()) {
-        abort(403);
-    }
+            abort(403);
+        }
 
-    return view('branch.edit', compact('branch'));
+        return view('branch.edit', compact('branch'));
     }
 
     /**
@@ -85,8 +95,8 @@ class BranchController extends Controller
         $request->validate([
             'nama_cabang' => 'required|string|max:255',
             'alamat' => 'required|string',
-            'nomor_antrean_awal' => 'required|integer',
-            'jadwal_operasional' => 'required|string',
+            'nomor_antrean_awal' => 'required|integer|min:1',
+            'jadwal_operasional' => 'required|string|max:255',
         ]);
 
         $branch->update([
@@ -117,3 +127,4 @@ class BranchController extends Controller
             ->with('success', 'Cabang berhasil dihapus.');
     }
 }
+    
