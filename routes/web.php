@@ -14,7 +14,6 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
 use App\Models\Branch;
 use App\Http\Controllers\QueueHistoryController;
-use App\Http\Controllers\BranchController;
 
 Route::get('/', fn () => view('landing'))->name('home');
 
