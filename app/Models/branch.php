@@ -21,4 +21,9 @@ class Branch extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function queues()
+    {
+        return $this->hasMany(Queue::class);
+    }
 }
