@@ -15,22 +15,22 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             <!-- Welcome Card -->
-            <div class="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-                <p class="text-sm text-gray-500">Selamat datang,</p>
-                <p class="text-2xl font-bold text-gray-900">{{ auth()->user()->name }}</p>
+            <div class="rounded-2xl bg-white border  p-6 shadow-sm">
+                <p class="text-sm">Selamat datang,</p>
+                <p class="text-2xl font-bold">{{ auth()->user()->name }}</p>
 
                 <div class="mt-4 grid md:grid-cols-3 gap-4">
-                    <div class="rounded-xl border border-gray-200 p-4">
-                        <p class="text-xs text-gray-500">Nama Bisnis</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ auth()->user()->business_name ?? '-' }}</p>
+                    <div class="rounded-xl border p-4">
+                        <p class="text-xs ">Nama Bisnis</p>
+                        <p class="mt-1 font-semibold ">{{ auth()->user()->business_name ?? '-' }}</p>
                     </div>
-                    <div class="rounded-xl border border-gray-200 p-4">
-                        <p class="text-xs text-gray-500">Kategori</p>
-                        <p class="mt-1 font-semibold text-gray-900">{{ auth()->user()->business_category ?? '-' }}</p>
+                    <div class="rounded-xl border  p-4">
+                        <p class="text-xs ">Kategori</p>
+                        <p class="mt-1 font-semibold ">{{ auth()->user()->business_category ?? '-' }}</p>
                     </div>
-                    <div class="rounded-xl border border-gray-200 p-4">
-                        <p class="text-xs text-gray-500">Subscription</p>
-                        <p class="mt-1 font-semibold text-gray-900">
+                    <div class="rounded-xl border  p-4">
+                        <p class="text-xs ">Subscription</p>
+                        <p class="mt-1 font-semibold ">
                             {{ strtoupper(auth()->user()->subscription_type ?? 'free') }}
                         </p>
                         <a href="{{ url('/pricing') }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
