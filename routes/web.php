@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\BranchController;
-
+use App\Http\Controllers\DashboardController;
 use App\Models\Branch;
 
 
@@ -58,4 +58,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/queue-history', [QueueHistoryController::class, 'index'])
         ->name('queue.history');
 });
+
+Route::middleware(['auth', 'ensure.onboarding'])
+    ->get('/dashboard', [DashboardController::class, 'index'])
+    ->name('dashboard');
 
