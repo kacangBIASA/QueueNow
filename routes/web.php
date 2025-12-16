@@ -10,7 +10,10 @@ use App\Http\Controllers\OwnerQueueController;
 
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\PaymentController;
-
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\DashboardController;
+use App\Models\Branch;
+use App\Http\Controllers\QueueHistoryController;
 use App\Http\Controllers\BranchController;
 
 Route::get('/', fn () => view('landing'))->name('home');
@@ -69,3 +72,12 @@ Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
  * MIDTRANS WEBHOOK (tanpa auth)
  */
 Route::post('/midtrans/callback', [PaymentController::class, 'midtransCallback'])->name('midtrans.callback');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/queue-history', [QueueHistoryController::class, 'index'])
+        ->name('queue.history');
+});
+
+Route::middleware(['auth', 'ensure.onboarding'])
+    ->get('/dashboard', [DashboardController::class, 'index'])
+    ->name('dashboard');
+
