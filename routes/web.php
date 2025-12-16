@@ -4,6 +4,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\BranchController;
+
+use App\Models\Branch;
 
 Route::get('/', function () {
     return view('landing');
@@ -34,6 +37,13 @@ Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+
+
+
     // nanti branches, queues, dll masuk sini
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('branches', BranchController::class);
 });
 
