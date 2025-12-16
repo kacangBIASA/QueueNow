@@ -16,7 +16,7 @@ return new class extends Migration
 
             // subscription
             $table->enum('subscription_type', ['free', 'pro'])->default('free');
-            $table->timestamp('subscription_expires_at')->nullable();
+            $table->timestamp('pro_activated_at')->nullable();
 
             // google login
             $table->string('google_id')->nullable()->unique();
@@ -32,7 +32,7 @@ return new class extends Migration
                 'phone',
                 'business_category',
                 'subscription_type',
-                'subscription_expires_at',
+                'pro_activated_at',
                 'google_id',
                 'avatar',
             ]);
