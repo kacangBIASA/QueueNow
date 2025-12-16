@@ -79,6 +79,27 @@ class User extends Authenticatable
     return $this->hasMany(Branch::class);
 }
 
+public function queues()
+{
+    return Queue::whereHas('branch', function ($q) {
+        $q->where('user_id', $this->id);
+    });
+}
+
+public function handle()
+{
+    $oneMonthAgo = now()->subMonth();
+
+    Queue::whereHas('branch.user', function ($q) {
+        $q->where('subscription_type', '!=', 'pro');
+    })
+    ->where('waktu_diambil', '<', $oneMonthAgo)
+    ->delete();
+
+    $this->info('Old queue history cleaned.');
+}
+
+
 }
 
 

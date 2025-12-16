@@ -8,6 +8,11 @@
                class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                 Kelola Cabang
             </a>
+            <a href="{{ route('queue.history') }}"
+   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg">
+   Riwayat Antrean
+</a>
+
         </div>
     </x-slot>
 
@@ -36,6 +41,7 @@
                         <a href="{{ url('/pricing') }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                             Upgrade Pro →
                         </a>
+
                     </div>
                 </div>
             </div>
