@@ -8,6 +8,13 @@ use App\Http\Controllers\BranchController;
 
 use App\Models\Branch;
 
+
+
+use App\Http\Controllers\QueueHistoryController;
+
+
+
+
 Route::get('/', function () {
     return view('landing');
 })->name('home');
@@ -45,5 +52,10 @@ Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('branches', BranchController::class);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/queue-history', [QueueHistoryController::class, 'index'])
+        ->name('queue.history');
 });
 

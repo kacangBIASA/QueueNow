@@ -23,7 +23,13 @@ class Branch extends Model
     }
 
     public function queues()
+{
+    return $this->hasMany(Queue::class);
+}
+
     {
         return $this->hasMany(Queue::class);
     }
 }
+
+
