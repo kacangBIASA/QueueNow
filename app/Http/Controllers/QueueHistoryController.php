@@ -15,20 +15,26 @@ class QueueHistoryController extends Controller
     {
         $user = auth()->user();
 
-        $query = Queue::where('user_id', $user->id);
+        $query = Queue::with('branch')
+            ->whereHas('branch', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
 
         // 🔍 Filter per tanggal
         if ($request->filled('date')) {
-            $query->whereDate('taken_at', $request->date);
+            $query->whereDate('queue_date', $request->date);
         }
 
-        // 🔍 Filter per bulan
+        // 🔍 Filter per bulan (format: YYYY-MM)
         if ($request->filled('month')) {
-            $query->whereMonth('taken_at', substr($request->month, 5, 2))
-                  ->whereYear('taken_at', substr($request->month, 0, 4));
+            $query->whereYear('queue_date', substr($request->month, 0, 4))
+                  ->whereMonth('queue_date', substr($request->month, 5, 2));
         }
 
-        $queues = $query->latest()->get();
+        $queues = $query
+            ->orderByDesc('queue_date')
+            ->orderByDesc('number')
+            ->get();
 
         return view('queue.history', compact('queues'));
     }

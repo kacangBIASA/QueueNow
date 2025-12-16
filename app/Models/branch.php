@@ -4,10 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Branch extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::creating(function ($branch) {
+            $branch->public_code = 'QN-' . strtoupper(\Str::random(6));
+        });
+    }
 
     protected $fillable = [
         'user_id',
