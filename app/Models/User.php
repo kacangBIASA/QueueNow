@@ -73,4 +73,12 @@ class User extends Authenticatable
 
         return $this->subscription_expires_at->isFuture();
     }
+
+    public function branches()
+{
+    return $this->hasMany(Branch::class);
 }
+
+}
+
+
