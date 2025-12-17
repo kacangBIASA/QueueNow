@@ -1,21 +1,11 @@
-version: "3.8"
-
 services:
   app:
-    build: .
+    image: kacangbiasa/queuenow-app:latest
     container_name: queuenow_app
-    volumes:
-      - .:/var/www/html
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      APP_NAME: QueueNow
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8000
-
-      LOG_CHANNEL: stderr
-
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
@@ -24,13 +14,10 @@ services:
       DB_PASSWORD: root
 
   web:
-    image: nginx:alpine
+    image: kacangbiasa/queuenow-web:latest
     container_name: queuenow_web
     ports:
       - "8000:80"
-    volumes:
-      - .:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
 
@@ -40,3 +27,13 @@ services:
     environment:
       MYSQL_DATABASE: queuenow
       MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
