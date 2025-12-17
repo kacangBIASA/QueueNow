@@ -2,38 +2,23 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                bat '''
-                    where composer || echo Composer tidak ditemukan di PATH
-                    composer install --no-interaction --prefer-dist
-                '''
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                bat '''
-                    docker --version
-                    docker compose version
-                    docker compose build
-                '''
+                bat 'docker build -t queuenow-app:latest .'
             }
         }
 
-        stage('Deploy Application') {
+        stage('Deploy') {
             steps {
                 bat '''
                 docker compose down
-                docker compose up -d --remove-orphans
-                docker compose ps
-                docker compose logs --no-color --tail=100
+                docker compose up -d
                 '''
             }
         }
@@ -41,10 +26,10 @@ pipeline {
 
     post {
         success {
-            echo 'CI/CD QueueNow berhasil'
+            echo 'CI/CD sukses 🚀'
         }
         failure {
-            echo 'Pipeline CI/CD gagal'
+            echo 'CI/CD gagal ❌'
         }
     }
 }
