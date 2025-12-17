@@ -20,11 +20,11 @@ services:
     depends_on:
       - app
 
-db:
-  image: mysql:8
-  container_name: queuenow_db
-  environment:
-    MYSQL_DATABASE: queuenow
-    MYSQL_ROOT_PASSWORD: root
-  ports:
-    - "3307:3306"
+  db:
+    image: mysql:8
+    container_name: queuenow_db
+    environment:
+      MYSQL_DATABASE: queuenow
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
