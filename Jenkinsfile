@@ -10,19 +10,26 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'composer install --no-interaction --prefer-dist'
+                bat '''
+                    where composer || echo Composer tidak ditemukan di PATH
+                    composer install --no-interaction --prefer-dist
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker compose build'
+                bat '''
+                    docker --version
+                    docker compose version
+                    docker compose build
+                '''
             }
         }
 
         stage('Deploy Application') {
             steps {
-                sh '''
+                bat '''
                     docker compose down
                     docker compose up -d
                 '''
@@ -32,7 +39,7 @@ pipeline {
 
     post {
         success {
-            echo 'CI/CD QueueNow berhasil dijalankan'
+            echo 'CI/CD QueueNow berhasil'
         }
         failure {
             echo 'Pipeline CI/CD gagal'
