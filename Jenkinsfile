@@ -30,8 +30,10 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 bat '''
-                    docker compose down
-                    docker compose up -d
+                docker compose down
+                docker compose up -d --remove-orphans
+                docker compose ps
+                docker compose logs --no-color --tail=100
                 '''
             }
         }
