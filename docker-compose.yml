@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: queuenow-app
+    container_name: queuenow-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: queuenow-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: queuenow
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
