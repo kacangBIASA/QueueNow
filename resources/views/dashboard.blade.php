@@ -7,17 +7,17 @@
 
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('branches.index') }}"
-                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
                     Kelola Cabang
                 </a>
 
                 <a href="{{ route('owner.queues.index') }}"
-                   class="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black dark:bg-gray-800 dark:hover:bg-gray-700">
+                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
                     Kelola Antrean
                 </a>
 
                 <a href="{{ route('queue.history') }}"
-                   class="inline-flex items-center rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600">
+                   class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
                     Riwayat Antrean
                 </a>
 
