@@ -26,13 +26,5 @@ services:
     environment:
       MYSQL_DATABASE: queuenow
       MYSQL_ROOT_PASSWORD: root
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-volumes:
-  db_data:
+    ports:
+      - "3306:3306"
