@@ -3,7 +3,7 @@ pipeline {
 
   environment {
     // GANTI dengan DockerHub kamu
-    IMAGE_NAME = 'DOCKERHUB_USERNAME/queuenow'
+    IMAGE_NAME = 'ridhoaja/queuenow'
     REGISTRY_CREDENTIALS = 'dockerhub-credentials'
   }
 
