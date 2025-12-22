@@ -1,65 +1,48 @@
-# syntax=docker/dockerfile:1
-
-############################
-# 1) Vendor (Composer) stage
-############################
-FROM php:8.2-cli-bookworm AS vendor
-
-RUN apt-get update && apt-get install -y \
-    git unzip curl ca-certificates \
-    libzip-dev \
-    libpng-dev libjpeg-dev libfreetype6-dev \
-    libsqlite3-dev pkg-config \
-  && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install pdo_mysql pdo_sqlite zip gd \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-
+# ====== Stage 1: build frontend (Vite) ======
+FROM node:20-alpine AS frontend
 WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
-COPY . .
-
-############################
-# 2) Frontend build stage
-############################
-FROM node:20-alpine AS assets
-WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
 COPY . .
 RUN npm run build
 
-############################
-# 3) Runtime stage
-############################
-FROM php:8.2-apache-bookworm AS runtime
 
+# ====== Stage 2: PHP + Apache runtime ======
+FROM php:8.2-apache
+
+# Apache rewrite for Laravel
+RUN a2enmod rewrite
+
+# System deps + PHP extensions
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    libpng-dev libjpeg-dev libfreetype6-dev \
-    libsqlite3-dev pkg-config \
-  && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install pdo_mysql pdo_sqlite zip gd \
-  && apt-get purge -y --auto-remove \
-    libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libsqlite3-dev pkg-config \
-  && rm -rf /var/lib/apt/lists/*
+    git unzip zip libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    libonig-dev libxml2-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo_mysql zip gd \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN a2enmod rewrite headers
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
-  /etc/apache2/sites-available/*.conf \
-  /etc/apache2/apache2.conf \
-  /etc/apache2/conf-available/*.conf
+# Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
-COPY --from=vendor /app /var/www/html
-COPY --from=assets /app/public/build /var/www/html/public/build
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Copy only composer files first (biar cache build bagus)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+# Copy app source
+COPY . .
+
+# Copy built frontend assets
+COPY --from=frontend /app/public/build ./public/build
+
+# Permissions (untuk storage & cache)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Apache document root => /public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 EXPOSE 80
-CMD ["apache2-foreground"]
