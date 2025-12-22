@@ -1,24 +1,45 @@
-version: "3.8"
-
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile   # kalau kamu tetap pakai "dockerfile", ganti jadi: dockerfile: dockerfile
     container_name: queuenow_app
     ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      - mysql
+      - "8081:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8081
 
-  mysql:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: queuenow
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+      # Google OAuth (isi sendiri)
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_REDIRECT_URL: "http://localhost:8081/auth/google/callback"
+
+      # Midtrans (isi sendiri)
+      MIDTRANS_IS_PRODUCTION: "false"
+      MIDTRANS_SERVER_KEY: ""
+      MIDTRANS_CLIENT_KEY: ""
+      MIDTRANS_PRO_PRICE: "25000"
+      MIDTRANS_PRO_NAME: "QueueNow Pro"
+
+      # WAJIB untuk Laravel: isi APP_KEY kamu (generate sekali)
+      APP_KEY: ""
+    depends_on:
+      - db
+
+  db:
     image: mysql:8.0
-    container_name: queuenow_mysql
-    restart: always
+    container_name: queuenow_db
     environment:
       MYSQL_DATABASE: queuenow
-      MYSQL_USER: queuenow
-      MYSQL_PASSWORD: secret
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3306:3306"
+      - "3307:3306"
