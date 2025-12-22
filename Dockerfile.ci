@@ -1,0 +1,35 @@
+FROM php:8.2-cli-bookworm
+
+# System deps untuk composer + sqlite + ekstensi PHP yang dibutuhkan test
+RUN apt-get update && apt-get install -y \
+    git unzip curl ca-certificates \
+    sqlite3 libsqlite3-dev pkg-config \
+    libzip-dev \
+  && docker-php-ext-install pdo pdo_sqlite zip \
+  && rm -rf /var/lib/apt/lists/*
+
+# Ambil composer binary saja (composer-nya dipakai oleh PHP 8.2 di image ini)
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+WORKDIR /app
+
+# Cache layer vendor lebih optimal
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-progress
+
+# Copy source
+COPY . .
+
+# Setup environment test pakai sqlite file
+RUN if not exist ".env" (copy .env.example .env) || exit /b 0
+RUN php artisan key:generate --force
+
+# Buat file sqlite untuk testing
+RUN mkdir -p database && \
+    (if not exist database\\database.sqlite (type NUL > database\\database.sqlite))
+
+ENV APP_ENV=testing
+ENV DB_CONNECTION=sqlite
+ENV DB_DATABASE=/app/database/database.sqlite
+
+CMD ["php", "artisan", "test", "--no-interaction"]
