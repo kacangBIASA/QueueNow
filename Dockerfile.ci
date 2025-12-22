@@ -1,14 +1,16 @@
 FROM php:8.2-cli-bookworm
 
-# System deps untuk composer + sqlite + ekstensi PHP yang dibutuhkan test
+# System deps untuk composer + sqlite + zip + gd (phpspreadsheet, qrcode, excel)
 RUN apt-get update && apt-get install -y \
     git unzip curl ca-certificates \
     sqlite3 libsqlite3-dev pkg-config \
     libzip-dev \
-  && docker-php-ext-install pdo pdo_sqlite zip \
+    libpng-dev libjpeg-dev libfreetype6-dev \
+  && docker-php-ext-configure gd --with-freetype --with-jpeg \
+  && docker-php-ext-install pdo pdo_sqlite zip gd \
   && rm -rf /var/lib/apt/lists/*
 
-# Ambil composer binary saja (composer-nya dipakai oleh PHP 8.2 di image ini)
+# Ambil composer binary saja (composer dijalankan oleh PHP 8.2 di image ini)
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /app
@@ -20,13 +22,11 @@ RUN composer install --no-interaction --prefer-dist --no-progress
 # Copy source
 COPY . .
 
-# Setup environment test pakai sqlite file
-RUN if not exist ".env" (copy .env.example .env) || exit /b 0
-RUN php artisan key:generate --force
-
-# Buat file sqlite untuk testing
-RUN mkdir -p database && \
-    (if not exist database\\database.sqlite (type NUL > database\\database.sqlite))
+# Setup env testing + sqlite file
+RUN if [ ! -f .env ]; then cp .env.example .env; fi \
+ && php artisan key:generate --force \
+ && mkdir -p database \
+ && [ -f database/database.sqlite ] || touch database/database.sqlite
 
 ENV APP_ENV=testing
 ENV DB_CONNECTION=sqlite
