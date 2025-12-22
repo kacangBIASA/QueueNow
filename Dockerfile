@@ -1,46 +1,65 @@
-# ===== Stage 1: build frontend (Vite) =====
-FROM node:20-alpine AS frontend
+# syntax=docker/dockerfile:1
+
+############################
+# 1) Vendor (Composer) stage
+############################
+FROM php:8.2-cli-bookworm AS vendor
+
+RUN apt-get update && apt-get install -y \
+    git unzip curl ca-certificates \
+    libzip-dev \
+    libpng-dev libjpeg-dev libfreetype6-dev \
+    libsqlite3-dev pkg-config \
+  && docker-php-ext-configure gd --with-freetype --with-jpeg \
+  && docker-php-ext-install pdo_mysql pdo_sqlite zip gd \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+COPY . .
+
+############################
+# 2) Frontend build stage
+############################
+FROM node:20-alpine AS assets
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-# ===== Stage 2: composer deps =====
-FROM composer:2 AS vendor
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
-
-# ===== Stage 3: runtime =====
-FROM php:8.2-apache
+############################
+# 3) Runtime stage
+############################
+FROM php:8.2-apache-bookworm AS runtime
 
 RUN apt-get update && apt-get install -y \
-    git unzip curl \
+    libzip-dev \
     libpng-dev libjpeg-dev libfreetype6-dev \
-    libzip-dev zip \
+    libsqlite3-dev pkg-config \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install gd pdo pdo_mysql zip \
-  && a2enmod rewrite \
+  && docker-php-ext-install pdo_mysql pdo_sqlite zip gd \
+  && apt-get purge -y --auto-remove \
+    libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libsqlite3-dev pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
-# Set Apache DocumentRoot to /public (Laravel)
+RUN a2enmod rewrite headers
+
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/000-default.conf \
- && sed -ri "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+  /etc/apache2/sites-available/*.conf \
+  /etc/apache2/apache2.conf \
+  /etc/apache2/conf-available/*.conf
 
 WORKDIR /var/www/html
+COPY --from=vendor /app /var/www/html
+COPY --from=assets /app/public/build /var/www/html/public/build
 
-# Copy app source
-COPY . .
-
-# Copy vendor from composer stage
-COPY --from=vendor /app/vendor ./vendor
-
-# Copy built assets from frontend stage
-COPY --from=frontend /app/public/build ./public/build
-
-# Permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
+CMD ["apache2-foreground"]
