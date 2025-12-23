@@ -10,12 +10,12 @@
 
         <div class="mt-4 flex flex-wrap gap-3">
             <button id="pay-button"
-                    class="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
+                class="rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
                 Bayar Sekarang
             </button>
 
             <a href="{{ route('dashboard') }}"
-               class="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
+                class="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
                 Kembali ke Dashboard
             </a>
         </div>
@@ -25,16 +25,25 @@
         </p>
     </div>
 
-    <script src="{{ $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
-            data-client-key="{{ $clientKey }}"></script>
+    <script
+        src="{{ $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ $clientKey }}"></script>
+
 
     <script>
-        document.getElementById('pay-button').addEventListener('click', function () {
+        document.getElementById('pay-button').addEventListener('click', function() {
             window.snap.pay(@json($trx->snap_token), {
-                onSuccess: function() { window.location.href = @json(route('dashboard')); },
-                onPending: function() { alert('Pembayaran pending. Cek lagi nanti.'); },
-                onError: function() { alert('Pembayaran gagal. Coba lagi.'); },
-                onClose: function() { /* user menutup popup */ }
+                onSuccess: function() {
+                    window.location.href = @json(route('dashboard'));
+                },
+                onPending: function() {
+                    alert('Pembayaran pending. Cek lagi nanti.');
+                },
+                onError: function() {
+                    alert('Pembayaran gagal. Coba lagi.');
+                },
+                onClose: function() {
+                    /* user menutup popup */ }
             });
         });
     </script>

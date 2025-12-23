@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction as MidtransTransaction;
 
 class PaymentController extends Controller
 {
@@ -86,8 +87,10 @@ class PaymentController extends Controller
 
     public function midtransCallback(Request $request)
     {
-        // Midtrans notification payload
         $payload = $request->all();
+
+        // (opsional tapi sangat membantu debugging)
+        \Log::info('MIDTRANS_CALLBACK', $payload);
 
         $orderId = $payload['order_id'] ?? null;
         $statusCode = $payload['status_code'] ?? null;
@@ -98,15 +101,15 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid payload'], 400);
         }
 
-        // Verify signature
+        // verify signature
         $serverKey = config('midtrans.server_key');
-        $computed = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
+        $computed = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
         if (!hash_equals($computed, $signatureKey)) {
             return response()->json(['message' => 'Invalid signature'], 403);
         }
 
-        $trx = Transaction::where('order_id', $orderId)->first();
+        $trx = \App\Models\Transaction::where('order_id', $orderId)->first();
         if (!$trx) {
             return response()->json(['message' => 'Transaction not found'], 404);
         }
@@ -114,20 +117,18 @@ class PaymentController extends Controller
         $transactionStatus = $payload['transaction_status'] ?? 'unknown';
         $paymentType = $payload['payment_type'] ?? null;
 
-        // Update transaction
         $trx->update([
             'status' => $transactionStatus,
             'payment_type' => $paymentType,
             'payload' => $payload,
         ]);
 
-        // Aktivasi PRO jika sukses
-        // settlement / capture biasanya berarti paid
+        // aktifkan PRO jika paid
         if (in_array($transactionStatus, ['settlement', 'capture'])) {
-            $trx->user->update([
+            // pakai forceFill biar gak ke-block fillable di User model
+            $trx->user->forceFill([
                 'subscription_type' => 'pro',
-                'pro_activated_at' => now(),
-            ]);
+            ])->save();
         }
 
         return response()->json(['message' => 'OK']);

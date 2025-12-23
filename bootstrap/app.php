@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.onboarding' => EnsureOnboardingComplete::class,
             'pro' => EnsurePro::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'midtrans/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

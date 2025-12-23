@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\OnboardingController;
-
 use App\Http\Controllers\PublicQueueController;
 use App\Http\Controllers\OwnerQueueController;
 
@@ -73,7 +72,10 @@ Route::middleware(['auth', 'ensure.onboarding'])->group(function () {
 /**
  * MIDTRANS WEBHOOK (tanpa auth)
  */
-Route::post('/midtrans/callback', [PaymentController::class, 'midtransCallback'])->name('midtrans.callback');
+Route::post('/midtrans/callback', [PaymentController::class, 'midtransCallback'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('midtrans.callback');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/queue-history', [QueueHistoryController::class, 'index'])
         ->name('queue.history');
