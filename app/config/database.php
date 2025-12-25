@@ -3,11 +3,11 @@
 
 return [
     'driver'  => getenv('DB_DRIVER') ?: 'mysql',
-    'host'    => getenv('DB_HOST') ?: '127.0.0.1',
+    'host'    => getenv('DB_HOST') ?: 'queuenow.mysql.database.azure.com',
     'port'    => (int)(getenv('DB_PORT') ?: 3306),
     'name'    => getenv('DB_DATABASE') ?: 'queuenow',
-    'user'    => getenv('DB_USERNAME') ?: 'root',
-    'pass'    => getenv('DB_PASSWORD') ?: '',
+    'user'    => getenv('DB_USERNAME') ?: 'queuenow',
+    'pass'    => getenv('DB_PASSWORD') ?: 'Queuenow123',
     'charset' => getenv('DB_CHARSET') ?: 'utf8mb4',
 
     'options' => [
