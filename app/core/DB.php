@@ -10,8 +10,10 @@ class DB
         if (self::$pdo) return self::$pdo;
 
         $cfg = config('database');
+
+        // Tambahkan sslmode=required untuk Azure MySQL (require_secure_transport=ON)
         $dsn = sprintf(
-            '%s:host=%s;port=%s;dbname=%s;charset=%s',
+            '%s:host=%s;port=%s;dbname=%s;charset=%s;sslmode=required',
             $cfg['driver'],
             $cfg['host'],
             $cfg['port'],
