@@ -12,7 +12,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Copy CA certificate untuk Azure MySQL
-COPY certs/azure-mysql-ca.pem /etc/ssl/certs/azure-mysql-ca.pem
+COPY certs/DigiCertGlobalRootG2.crt.pem /etc/ssl/certs/DigiCertGlobalRootG2.crt.pem
 
 RUN chown -R www-data:www-data /var/www/html
 
