@@ -3,7 +3,7 @@
 
 return [
     'driver'  => getenv('DB_DRIVER') ?: 'mysql',
-    'host'    => getenv('DB_HOST') ?: 'queuenow.mysql.database.azure.com',
+    'host'    => getenv('DB_HOST') ?: 'queuenoww.mysql.database.azure.com',
     'port'    => (int)(getenv('DB_PORT') ?: 3306),
     'name'    => getenv('DB_DATABASE') ?: 'queuenow',
     'user'    => getenv('DB_USERNAME') ?: 'queuenow',
