@@ -17,7 +17,7 @@
   <header class="topbar">
     <div class="container">
       <div class="nav">
-        <a class="brand" href="<?= htmlspecialchars(base_url('/')) ?>">
+        <a class="brand">
           <span class="brand-badge">Q</span>
           <span class="brand-text">QueueNow</span>
         </a>
@@ -27,9 +27,6 @@
             <button type="button" class="theme-btn" data-set-theme="dark" title="Tema Gelap">🌙</button>
             <button type="button" class="theme-btn" data-set-theme="light" title="Tema Terang">☀️</button>
           </div>
-
-          <a class="btn btn-ghost" href="<?= htmlspecialchars(base_url('/login')) ?>">Login</a>
-          <a class="btn btn-primary" href="<?= htmlspecialchars(base_url('/register')) ?>">Daftar</a>
         </div>
       </div>
     </div>
