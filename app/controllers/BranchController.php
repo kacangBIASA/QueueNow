@@ -68,12 +68,22 @@ class BranchController extends Controller
         // enforce limit Free
         $this->enforceBranchLimit($businessId);
 
+        // ✅ ambil flash 'old' sekali saja (biar tidak jadi null pada pemanggilan kedua)
+        $oldJson = Session::flash('old');
+        $old = [];
+
+        if (is_string($oldJson) && $oldJson !== '') {
+            $decoded = json_decode($oldJson, true);
+            $old = is_array($decoded) ? $decoded : [];
+        }
+
         return View::render('branches/create', [
             'title' => 'Tambah Cabang - QueueNow',
             'error' => Session::flash('error'),
-            'old' => Session::flash('old') ? json_decode(Session::flash('old'), true) : [],
+            'old'   => $old,
         ], 'layouts/app');
     }
+
 
     public function store()
     {
@@ -126,7 +136,7 @@ class BranchController extends Controller
 
         // generate unique qr_token (retry kalau tabrakan)
         $token = $this->generateQrToken();
-        for ($i=0; $i<3; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $exist = DB::fetchOne("SELECT id FROM branches WHERE qr_token=?", [$token]);
             if (!$exist) break;
             $token = $this->generateQrToken();
