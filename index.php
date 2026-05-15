@@ -33,9 +33,7 @@ session_set_cookie_params([
     'samesite' => 'Lax',
 ]);
 
-session_start();
-
-// Register config ke helper global
+// Register config ke helper global (harus sebelum session karena session pakai DB)
 $GLOBALS['config'] = [
   'app'      => $appConfig,
   'database' => require __DIR__ . '/app/config/database.php',
@@ -43,6 +41,13 @@ $GLOBALS['config'] = [
   'plans'    => require __DIR__ . '/app/config/plans.php',
   'google'   => require __DIR__ . '/app/config/google.php',
 ];
+
+// Register custom database session handler untuk Vercel Serverless
+require __DIR__ . '/app/core/DatabaseSessionHandler.php';
+$handler = new DatabaseSessionHandler();
+session_set_save_handler($handler, true);
+
+session_start();
 
 // Core
 $router = new Router();
