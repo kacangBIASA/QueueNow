@@ -5,7 +5,7 @@ $sslOptions = [];
 // Jika tidak berjalan di localhost (misalnya di Render), kita gunakan sertifikat Aiven
 if (getenv('DB_HOST') && getenv('DB_HOST') !== '127.0.0.1' && getenv('DB_HOST') !== 'localhost') {
     $sslOptions = [
-        PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/aiven-ca.pem',
+        PDO::MYSQL_ATTR_SSL_CA => __DIR__ . '/../../certs/aiven-ca.pem',
         PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
     ];
 }
